@@ -1,0 +1,27 @@
+<head>
+  <title>lwsh</title>
+  <link rel=stylesheet href=fa/css/font-awesome.min.css>
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+</head>
+
+<body>
+  <header>study hall</header>
+  {{> cameras}}
+</body>
+
+<template name="cameras">
+  <section id=cameras>
+    <div id=nocameras>
+        <div class="icons fa-stack">
+            <i class="fa fa-camera fa-stack-1x"></i>
+            <i class="fa fa-ban fa-stack-2x"></i>
+        </div>
+        <div>
+            Nobody has their camera turned on. Why not turn yours own?<br/>
+            Oh, that's right&mdash;because THERE IS NO CAMERA SUPPORT YET.
+        </div>
+
+    </div>
+    <div class="fa fa-chevron-up expandcollapse"></div>
+  </section>
+</template>

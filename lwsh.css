@@ -1,0 +1,105 @@
+body {
+    font-family: "Open Sans", sans-serif;
+    color: #333;
+    background: url('cubes.png');
+    padding: 0;
+    margin: 0;
+}
+
+header {
+    margin: 0;
+    padding: 0.2em 0.5em;
+    font-weight: bold;
+    background: linear-gradient(175deg, rgba(135, 184, 43, 0.7), rgba(22, 153, 53, 0.7));
+    color: rgb(250, 250, 250);
+    font-size: 1.5em;
+}
+
+#cameras {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2em 0;
+    min-height: 150px;
+    background: rgba(0, 0, 0, 0.7);
+    color: rgb(250, 250, 250);
+    position: relative;
+    text-align: center;
+}
+
+#nocameras {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    bottom: 100px;
+    left: 0;
+    right: 0;
+}
+
+#nocameras .icons {
+    font-size: 0.8em;
+    margin-right: 1em;
+}
+
+#nocameras div {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: left;
+}
+
+#nocameras .icons .fa-ban {
+    color: rgba(250, 100, 100, 0.6);
+}
+
+#cameras .expandcollapse {
+    cursor: pointer;
+    position: absolute;
+    font-size: 1em;
+    padding: 0.2em;
+    background: inherit;
+    bottom: -1.4em;
+    border-radius: 0 0 0 5px;
+    right: 0;
+}
+
+.paused {
+    background-color: #8AC757;
+    border: 0.2em solid #7FAE59;
+}
+
+.paused:hover {
+    background-color: #A2D578;
+}
+
+.paused:active {
+    border: 0.2em solid #68A436;
+}
+
+.running {
+    background-color: #FF9C17;
+    border: 0.2em solid #F2900C;
+}
+
+.running:hover {
+    background-color: #FFAE42;
+}
+
+.running:active {
+    border: 0.2em solid #ED8800;
+}
+
+/* from colorschemedesigner.com:
+
+.primary-1 { background-color: #8AC757 }
+.primary-2 { background-color: #7FAE59 }
+.primary-3 { background-color: #68A436 }
+.primary-4 { background-color: #9CD56D }
+.primary-5 { background-color: #A2D578 }
+
+For when it's running, didn't use these in their entirety:
+.primary-1 { background-color: #FF9200 }
+.primary-2 { background-color: #F2900C }
+.primary-3 { background-color: #ED8800 }
+.primary-4 { background-color: #FF970D }
+.primary-5 { background-color: #FF9C17 }
+
+*/
