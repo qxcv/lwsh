@@ -6,7 +6,12 @@
 
 <body>
   <header>study hall</header>
+
   {{> cameras}}
+
+  {{> pomostatus}}
+
+  {{> chatbox}}
 </body>
 
 <template name="cameras">
@@ -24,4 +29,41 @@
     </div>
   </section>
   <div id=expandcollapse class="fa fa-chevron-up"></div>
+</template>
+
+<template name="pomostatus">
+    <section id=pomostatus>
+        <span id=status-name>{{status.name}}</span> for
+        <time datetime={{status.until}}><span class=minutes></span> minutes and <span class=seconds></span>
+        seconds</time>.
+    </section>
+</template>
+
+<template name="chatbox">
+    <section id=chatbox>
+        <table>
+            <tr>
+                <td id=users>
+                    <div class=user>
+                        personA
+                    </div>
+                    <div class=user>
+                        personB
+                    </div>
+                    <div class=user>
+                        personC
+                    </div>
+                </td>
+                <td id=scrollback>
+                    qxcv: Hello, world!
+                </td>
+            </tr>
+            <tr>
+                <td id=mynick>
+                    qxcv
+                </td>
+                <td><input type=text placeholder="Type away"></td>
+            </tr>
+        </table>
+    </section>
 </template>
