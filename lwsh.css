@@ -83,6 +83,7 @@ header {
 #chatbox {
     margin: 0 2em 0 2em;
     background-color: rgba(255, 255, 255, 0.3);
+
 }
 
 #chatbox table {
@@ -90,8 +91,9 @@ header {
     table-layout: fixed;
     border-style: hidden;
     border-collapse: collapse;
-    height: 500px;
+    height: 100%;
     margin: 0;
+    padding: 0.5em;
 }
 
 #chatbox td {

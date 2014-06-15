@@ -1,4 +1,21 @@
-Pomodoros = new Meteor.Collection('Pomodoros');
+function forceGetUser(cb) {
+    /* XXX: Try storing this in session, just in case user stuff gets evicted
+     * after a while. */
+    var u = Meteor.user();
+    if (u !== null) {
+        return cb();
+    }
+
+    /* And, if all else fails... */
+    var username = 'tempuser' + Random.secret();
+    var password = Random.secret();
+    Session.set('username', username);
+    Session.set('password', password);
+    return Accounts.createUser({
+        username: username,
+        password: password
+    }, cb);
+}
 
 if (Meteor.isClient) {
     Template.cameras.hidden = false;
@@ -23,9 +40,9 @@ if (Meteor.isClient) {
         }
     });
 
-    //if (Session.get('pomodoro_status') === undefined) {
+    if (Session.get('pomodoro_status') === undefined) {
         Session.set('pomodoro_status', {type: 'running', name: 'Pomodoro running', until: '2014-06-15T13:00Z'});
-    //}
+    }
 
     Template.pomostatus.status = function() {
         return Session.get('pomodoro_status');
@@ -54,6 +71,36 @@ if (Meteor.isClient) {
 
     Template.pomostatus.destroyed = function() {
         Meteor.clearInterval(this._timer_handle);
+    };
+
+    Template.chatbox.rendered = function() {
+        /* If we've got a nickname, use it. */
+        /*var u = Meteor.user();
+        var ne = this.$('#mynick input');
+        Deps.autorun(function() {
+            var uid = Meteor.userId();
+            Meteor.users.find({_id: uid}, {fields: {profile: 1}});
+            if (uid) {
+                var profile = Meteor.users.find({_id: uid},
+                    {fields:
+                        {profile: 1}});
+                if (profile && profile.nickname) {
+                    ne.val(profile.nickname);
+                }
+            }
+        });*/
+    };
+
+    Template.chatbox.events = {
+        'keyup #mynick input': function(e) {
+            var nick = $(e.target).val();
+            forceGetUser(function() {
+                Meteor.users.update({_id: Meteor.userId()},
+                        {$set: {profile:
+                                   {nick: nick}}}
+                );
+            });
+        }
     };
 }
 

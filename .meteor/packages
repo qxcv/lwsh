@@ -6,3 +6,7 @@
 standard-app-packages
 autopublish
 insecure
+jquery
+random
+accounts-base
+accounts-password
