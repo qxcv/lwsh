@@ -103,8 +103,11 @@ if (Meteor.isClient) {
                 var elem = $("#msgin");
                 var v = elem.val();
                 if (v.length > 0) {
-                    Messages.insert({uid: Meteor.userId(),
-                                     message: v});
+                    /* TODO: Pre-fill values */
+                    Messages.insert({message: v,
+                                     /* TODO: Both this and server-time should
+                                      * be UTC */
+                                     time: new Date().valueOf()});
                 }
                 elem.val('');
             });
@@ -130,9 +133,12 @@ if (Meteor.isServer) {
     Messages.allow({
         insert: function(uid, doc) {
             doc.time = new Date().valueOf();
+            doc.uid = Meteor.userId();
             var u = Meteor.user();
             if (u.profile && u.profile.nick) {
                 doc.nick = u.profile.nick;
+            } else {
+                doc.nick = '<empty nickname>';
             }
             check(doc, {
                 uid: String,
@@ -140,7 +146,7 @@ if (Meteor.isServer) {
                 time: Number,
                 nick: Match.Optional(String)
             });
-            return doc.uid === Meteor.userId();
+            return true;
         }
     });
 

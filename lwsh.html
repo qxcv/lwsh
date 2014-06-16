@@ -41,7 +41,7 @@
 
 <template name="chatbox">
     <section id=chatbox>
-        <table>
+        <table height=500px>
             <tr>
                 <td id=users>
                     <div class=user>
@@ -54,21 +54,12 @@
                         personC
                     </div>
                 </td>
-                <td id=scrollback>
-                    {{#each messages}}
-                        <div class=entry>
-                            <div class=uid>
-                                {{#if nick }}
-                                    {{nick}}:
-                                {{else}}
-                                    {{uid}}:
-                                {{/if}}
-                            </div>
-                            <div class=message>
-                                {{message}}
-                            </div>
-                        </div>
-                    {{/each}}
+                <td id=scrollback-wrapper>
+                    <div id=scrollback>
+                        {{#each messages}}
+                            {{> message }}
+                        {{/each}}
+                    </div>
                 </td>
             </tr>
             <tr>
@@ -79,4 +70,15 @@
             </tr>
         </table>
     </section>
+</template>
+
+<template name="message">
+    <div class=entry>
+        <div class=uid>
+            {{nick}}:
+        </div>
+        <div class=message>
+            {{message}}
+        </div>
+    </div>
 </template>
