@@ -75,20 +75,11 @@ if (Meteor.isClient) {
 
     Template.chatbox.rendered = function() {
         /* If we've got a nickname, use it. */
-        /*var u = Meteor.user();
+        var u = Meteor.user();
         var ne = this.$('#mynick input');
-        Deps.autorun(function() {
-            var uid = Meteor.userId();
-            Meteor.users.find({_id: uid}, {fields: {profile: 1}});
-            if (uid) {
-                var profile = Meteor.users.find({_id: uid},
-                    {fields:
-                        {profile: 1}});
-                if (profile && profile.nickname) {
-                    ne.val(profile.nickname);
-                }
-            }
-        });*/
+        if (u && u.profile && u.profile.nick) {
+            ne.val(u.profile.nick);
+        }
     };
 
     Template.chatbox.events = {
