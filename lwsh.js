@@ -1,3 +1,5 @@
+Messages = new Meteor.Collection("messages");
+
 function forceGetUser(cb) {
     /* XXX: Try storing this in session, just in case user stuff gets evicted
      * after a while. */
@@ -41,7 +43,10 @@ if (Meteor.isClient) {
     });
 
     if (Session.get('pomodoro_status') === undefined) {
-        Session.set('pomodoro_status', {type: 'running', name: 'Pomodoro running', until: '2014-06-15T13:00Z'});
+        Session.set('pomodoro_status',
+                {type: 'running',
+                 name: 'Pomodoro running',
+                 until: '2038-01-19T03:14Z'});
     }
 
     Template.pomostatus.status = function() {
@@ -91,12 +96,56 @@ if (Meteor.isClient) {
                                    {nick: nick}}}
                 );
             });
+        },
+        'keypress #msgin': function(e) {
+            if (e.which !== 13) return;
+            forceGetUser(function() {
+                var elem = $("#msgin");
+                var v = elem.val();
+                if (v.length > 0) {
+                    Messages.insert({uid: Meteor.userId(),
+                                     message: v});
+                }
+                elem.val('');
+            });
         }
+    };
+
+    Template.chatbox.messages = function() {
+        return Messages.find({}, {sort: {time: 1}});
     };
 }
 
 if (Meteor.isServer) {
-  Meteor.startup(function () {
-    // code to run on server at startup
-  });
+    Meteor.startup(function () {
+        Messages.remove({});
+    });
+
+    var _rt = function(){return true;};
+    Messages.deny({
+        remove: _rt,
+        update: _rt
+    });
+
+    Messages.allow({
+        insert: function(uid, doc) {
+            doc.time = new Date().valueOf();
+            var u = Meteor.user();
+            if (u.profile && u.profile.nick) {
+                doc.nick = u.profile.nick;
+            }
+            check(doc, {
+                uid: String,
+                message: String,
+                time: Number,
+                nick: Match.Optional(String)
+            });
+            return doc.uid === Meteor.userId();
+        }
+    });
+
+    // XXX turn off autopublish before deploy and add this in
+    /*Meteor.publish('messages', function() {
+        return Messages.find({}, {sort: {time: -1}, limit: 200});
+    });*/
 }

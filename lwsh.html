@@ -55,14 +55,27 @@
                     </div>
                 </td>
                 <td id=scrollback>
-                    personA: Hello, world!
+                    {{#each messages}}
+                        <div class=entry>
+                            <div class=uid>
+                                {{#if nick }}
+                                    {{nick}}:
+                                {{else}}
+                                    {{uid}}:
+                                {{/if}}
+                            </div>
+                            <div class=message>
+                                {{message}}
+                            </div>
+                        </div>
+                    {{/each}}
                 </td>
             </tr>
             <tr>
                 <td id=mynick>
                     <input type=text placeholder="Enter nick">
                 </td>
-                <td><input type=text placeholder="Type away!"></td>
+                <td><input type=text placeholder="Type away!" id=msgin></td>
             </tr>
         </table>
     </section>

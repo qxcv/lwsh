@@ -84,6 +84,7 @@ header {
 #chatbox {
     margin: 0 2em 0 2em;
     background-color: rgba(255, 255, 255, 0.3);
+    height: 500px;
 
 }
 
@@ -129,6 +130,16 @@ header {
 
 #chatbox input:focus {
     outline-width: 0;
+}
+
+#scrollback .uid, #scrollback .message {
+    display: inline;
+}
+
+#scrollback .uid {
+    width: 3em;
+    word-break: any;
+    font-weight: bold;
 }
 
 .paused {
