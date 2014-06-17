@@ -44,6 +44,9 @@ if (Meteor.isClient) {
                 $('#expandcollapse').removeClass('fa-chevron-up');
                 Template.cameras.hidden = true;
             }
+        },
+        'click #cameraoptions': function() {
+            // toggle webcam broadcast
         }
     });
 
@@ -120,7 +123,7 @@ if (Meteor.isClient) {
                 }
                 elem.val('');
             });
-        }
+        },
     };
 
     Template.chatbox.messages = function() {
@@ -146,6 +149,12 @@ if (Meteor.isServer) {
     Messages.deny({
         remove: _rt,
         update: _rt
+    });
+
+    ActiveUsers.deny({
+        remove: _rt,
+        update: _rt,
+        insert: _rt
     });
 
     Messages.allow({
