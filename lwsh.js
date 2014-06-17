@@ -104,10 +104,13 @@ if (Meteor.isClient) {
                 var v = elem.val();
                 if (v.length > 0) {
                     /* TODO: Pre-fill values */
+                    var u = Meteor.user();
                     Messages.insert({message: v,
                                      /* TODO: Both this and server-time should
                                       * be UTC */
-                                     time: new Date().valueOf()});
+                                     time: new Date().valueOf(),
+                                     nick: u.profile && u.profile.nick ? u.profile.nick : '',
+                                     uid: Meteor.userId()});
                 }
                 elem.val('');
             });
