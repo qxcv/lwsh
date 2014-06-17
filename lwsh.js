@@ -1,4 +1,5 @@
 Messages = new Meteor.Collection("messages");
+ActiveUsers = new Meteor.Collection("actives");
 
 function forceGetUser(cb) {
     /* XXX: Try storing this in session, just in case user stuff gets evicted
@@ -18,6 +19,10 @@ function forceGetUser(cb) {
         password: password
     }, cb);
 }
+
+SECONDS = 1000;
+HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
+EVICTION_TIME = 60 * SECONDS; // evict automatically after 60s
 
 if (Meteor.isClient) {
     Template.cameras.hidden = false;
@@ -56,26 +61,26 @@ if (Meteor.isClient) {
     Template.pomostatus.created = function() {
         var thing = this;
 
-        this._timer_handle = Meteor.setInterval(function() {
-            var time_elem = this.$('time');
-            var endpoint = new Date(time_elem.attr('datetime'));
+        this._timerHandle = Meteor.setInterval(function() {
+            var timeElem = this.$('time');
+            var endpoint = new Date(timeElem.attr('datetime'));
             var now = new Date();
-            var delta_seconds = (endpoint - now)/1000;
+            var deltaSeconds = (endpoint - now)/1000;
             var minutes, seconds;
-            if (delta_seconds <= 0) {
+            if (deltaSeconds <= 0) {
                 minutes = 0;
                 seconds = 0;
             } else {
-                minutes = parseInt(delta_seconds / 60);
-                seconds = parseInt(delta_seconds % 60);
+                minutes = parseInt(deltaSeconds / 60);
+                seconds = parseInt(deltaSeconds % 60);
             }
-            time_elem.children('.minutes').text(minutes);
-            time_elem.children('.seconds').text(seconds);
+            timeElem.children('.minutes').text(minutes);
+            timeElem.children('.seconds').text(seconds);
         }, 500);
     };
 
     Template.pomostatus.destroyed = function() {
-        Meteor.clearInterval(this._timer_handle);
+        Meteor.clearInterval(this._timerHandle);
     };
 
     Template.chatbox.rendered = function() {
@@ -95,6 +100,7 @@ if (Meteor.isClient) {
                         {$set: {profile:
                                    {nick: nick}}}
                 );
+                Meteor.call('alive');
             });
         },
         'keypress #msgin': function(e) {
@@ -106,9 +112,7 @@ if (Meteor.isClient) {
                     /* TODO: Pre-fill values */
                     var u = Meteor.user();
                     Messages.insert({message: v,
-                                     /* TODO: Both this and server-time should
-                                      * be UTC */
-                                     time: new Date().valueOf(),
+                                     time: new Date().getTime(),
                                      nick: u.profile && u.profile.nick ? u.profile.nick : '',
                                      uid: Meteor.userId()});
                 }
@@ -120,6 +124,15 @@ if (Meteor.isClient) {
     Template.chatbox.messages = function() {
         return Messages.find({}, {sort: {time: 1}});
     };
+
+    Template.chatbox.occupants = function() {
+        return ActiveUsers.find({});
+    };
+
+    /* Heartbeats */
+    Meteor.setInterval(function() {
+        Meteor.call('alive');
+    }, HEARTBEAT_TIME);
 }
 
 if (Meteor.isServer) {
@@ -135,7 +148,7 @@ if (Meteor.isServer) {
 
     Messages.allow({
         insert: function(uid, doc) {
-            doc.time = new Date().valueOf();
+            doc.time = new Date().getTime();
             doc.uid = Meteor.userId();
             var u = Meteor.user();
             if (u.profile && u.profile.nick) {
@@ -157,4 +170,29 @@ if (Meteor.isServer) {
     /*Meteor.publish('messages', function() {
         return Messages.find({}, {sort: {time: -1}, limit: 200});
     });*/
+
+    Meteor.methods({
+        alive: function() {
+            var uid = Meteor.userId();
+            if (uid) {
+                var time = new Date().getTime();
+                var u = Meteor.user();
+                var nick = undefined;
+                if (u && u.profile && u.profile.nick) {
+                    nick = u.profile.nick;
+                }
+                ActiveUsers.upsert({uid: uid},
+                    {$set:
+                        {lastSeen: time,
+                         nick: nick}});
+                return time;
+            }
+            return null;
+        },
+    });
+
+    Meteor.setInterval(function() {
+        var removeTime = new Date().getTime() - EVICTION_TIME;
+        ActiveUsers.remove({lastSeen: {$lt: removeTime}});
+    }, HEARTBEAT_TIME);
 }

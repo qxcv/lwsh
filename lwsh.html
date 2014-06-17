@@ -44,15 +44,15 @@
         <table height=500px>
             <tr>
                 <td id=users>
-                    <div class=user>
-                        personA
-                    </div>
-                    <div class=user>
-                        personB
-                    </div>
-                    <div class=user>
-                        personC
-                    </div>
+                    {{# each occupants }}
+                        <div class=user>
+                            {{#if nick }}
+                                {{nick}}
+                            {{else}}
+                                {{uid}}
+                            {{/if}}
+                        </div>
+                    {{/each}}
                 </td>
                 <td id=scrollback-wrapper>
                     <div id=scrollback>
