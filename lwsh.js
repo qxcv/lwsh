@@ -90,6 +90,8 @@ if (Meteor.isClient) {
         if (u && u.profile && u.profile.nick) {
             ne.val(u.profile.nick);
         }
+        // notify the server that we exist
+        Meteor.call('alive');
     };
 
     Template.chatbox.events = {
