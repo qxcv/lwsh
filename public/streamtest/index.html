@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Streaming video test
+        </title>
+        <meta charset=utf-8>
+        <script>
+            function getImage() {
+                navigator.mozGetUserMedia({video: true}, function(stream) {
+                    var ve = document.querySelector('video');
+                    ve.mozSrcObject = stream;
+                    ve.play();
+                }, function(error) {
+                    alert("Haven't got it :(");
+                });
+            }
+
+            getImage();
+        </script>
+    </head>
+    <body>
+        <video width=300 height=200></video>
+    </body>
+</html>
