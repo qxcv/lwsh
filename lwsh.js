@@ -12,8 +12,6 @@ function forceGetUser(cb) {
     /* And, if all else fails... */
     var username = 'tempuser' + Random.secret();
     var password = Random.secret();
-    Session.set('username', username);
-    Session.set('password', password);
     return Accounts.createUser({
         username: username,
         password: password
@@ -22,7 +20,9 @@ function forceGetUser(cb) {
 
 SECONDS = 1000;
 HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
-EVICTION_TIME = 60 * SECONDS; // evict automatically after 60s
+EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
+
+var aliveHandle = undefined;
 
 if (Meteor.isClient) {
     Template.cameras.hidden = false;
@@ -116,10 +116,10 @@ if (Meteor.isClient) {
                 if (v.length > 0) {
                     /* TODO: Pre-fill values */
                     var u = Meteor.user();
-                    Messages.insert({message: v,
-                                     time: new Date().getTime(),
-                                     nick: u.profile && u.profile.nick ? u.profile.nick : '',
-                                     uid: Meteor.userId()});
+                    var rv = Meteor.call('say', {message: v,
+                                        time: new Date().getTime(),
+                                        nick: u.profile && u.profile.nick ? u.profile.nick : '',
+                                        uid: Meteor.userId()});
                 }
                 elem.val('');
             });
@@ -134,14 +134,24 @@ if (Meteor.isClient) {
         return ActiveUsers.find({});
     };
 
-    /* Heartbeats */
-    Meteor.setInterval(function() {
-        Meteor.call('alive');
-    }, HEARTBEAT_TIME);
+    Meteor.startup(function() {
+        Deps.autorun(function() {
+            Meteor.call('alive');
+        });
+        /* Heartbeats */
+        aliveHandle = Meteor.setInterval(function() {
+            Meteor.call('alive');
+        }, HEARTBEAT_TIME);
+        window.onbeforeunload = function(e) {
+            if (aliveHandle) Meteor.clearInterval(aliveHandle);
+            Meteor.call('dead');
+        };
+    });
 }
 
 if (Meteor.isServer) {
     Meteor.startup(function () {
+        // TODO: what if there are other clients connected with the same uid?
         Messages.remove({});
     });
 
@@ -155,26 +165,6 @@ if (Meteor.isServer) {
         remove: _rt,
         update: _rt,
         insert: _rt
-    });
-
-    Messages.allow({
-        insert: function(uid, doc) {
-            doc.time = new Date().getTime();
-            doc.uid = Meteor.userId();
-            var u = Meteor.user();
-            if (u.profile && u.profile.nick) {
-                doc.nick = u.profile.nick;
-            } else {
-                doc.nick = '<empty nickname>';
-            }
-            check(doc, {
-                uid: String,
-                message: String,
-                time: Number,
-                nick: Match.Optional(String)
-            });
-            return true;
-        }
     });
 
     // XXX turn off autopublish before deploy and add this in
@@ -192,13 +182,53 @@ if (Meteor.isServer) {
                 if (u && u.profile && u.profile.nick) {
                     nick = u.profile.nick;
                 }
+                if (!ActiveUsers.findOne({uid: uid})) {
+                    // Make sure we tell the room that they've joined!
+                    Messages.insert({
+                        time: time,
+                        message: (nick ? nick : Meteor.userId()) + ' joined the room',
+                    });
+                }
                 ActiveUsers.upsert({uid: uid},
                     {$set:
                         {lastSeen: time,
                          nick: nick}});
                 return time;
+            } else {
+                // what if there's no UID?
+                Deps.autorun(function() {
+                    forceGetUser(function() {
+                        Meteor.call('alive');
+                    });
+                });
             }
             return null;
+        },
+        dead: function() {
+            var uid = Meteor.userId();
+            ActiveUsers.remove({uid: uid});
+        },
+        say: function(doc) {
+            doc.time = new Date().getTime();
+            doc.uid = Meteor.userId();
+            var u = Meteor.user();
+            if (u.profile && u.profile.nick) {
+                doc.nick = u.profile.nick;
+            } else {
+                doc.nick = '<empty nickname>';
+            }
+            check(doc, {
+                uid: String,
+                message: String,
+                time: Number,
+                nick: Match.Optional(String)
+            });
+            Messages.insert(doc);
+            /* TODO: check the incoming message for pomodoro timer control
+             * strings.  I may want to split this out into a server method
+             * before I do that, though, since it doesn't make a lot of sense to
+             * be putting globs of logic into a .allow() clause :-) */
+            return true;
         },
     });
 

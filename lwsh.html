@@ -78,6 +78,7 @@
 </template>
 
 <template name="message">
+    {{#if nick}}
     <div class=entry>
         <div class=uid>
             {{nick}}:
@@ -86,4 +87,9 @@
             {{message}}
         </div>
     </div>
+    {{else}}
+    <div class=announcement>
+        {{message}}
+    </div>
+    {{/if}}
 </template>

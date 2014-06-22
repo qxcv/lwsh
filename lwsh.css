@@ -149,6 +149,10 @@ header {
     outline-width: 0;
 }
 
+#scrollback .announcement {
+    color: #999;
+}
+
 #scrollback .uid, #scrollback .message {
     display: inline;
 }
