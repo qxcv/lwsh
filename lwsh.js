@@ -12,15 +12,29 @@ function forceGetUser(cb) {
     /* And, if all else fails... */
     var username = 'tempuser' + Random.secret();
     var password = Random.secret();
-    return Accounts.createUser({
+    Accounts.createUser({
         username: username,
         password: password
     }, cb);
 }
 
+function kill(uid) {
+    if (!uid) uid = Meteor.userId();
+    var name = uid;
+    var u = Meteor.users.findOne({_id: uid}, {fields: {profile: 1}});
+    if (u && u.profile && u.profile.nick) {
+        name = u.profile.nick;
+    }
+    if (ActiveUsers.remove({uid: uid})) {
+        Messages.insert({time: new Date().getTime(),
+                         message: name + ' left room'});
+    }
+}
+
 SECONDS = 1000;
 HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
 EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
+POMODORO_REGEX = /(?:pomo(?:doro)?)?\w+(?:for)?\w*\:?(\d{1,3})$/i;
 
 var aliveHandle = undefined;
 
@@ -93,8 +107,6 @@ if (Meteor.isClient) {
         if (u && u.profile && u.profile.nick) {
             ne.val(u.profile.nick);
         }
-        // notify the server that we exist
-        Meteor.call('alive');
     };
 
     Template.chatbox.events = {
@@ -136,7 +148,11 @@ if (Meteor.isClient) {
 
     Meteor.startup(function() {
         Deps.autorun(function() {
-            Meteor.call('alive');
+            // TODO: is this actually working? I have no idea, but I suspect
+            // it's triggering a Meteor bug when it tries to run alive() :(
+            forceGetUser(function() {
+                Deps.autorun(Meteor.call.bind(Meteor.call, 'alive'));
+            });
         });
         /* Heartbeats */
         aliveHandle = Meteor.setInterval(function() {
@@ -196,17 +212,12 @@ if (Meteor.isServer) {
                 return time;
             } else {
                 // what if there's no UID?
-                Deps.autorun(function() {
-                    forceGetUser(function() {
-                        Meteor.call('alive');
-                    });
-                });
+                // XXX to fix
             }
             return null;
         },
         dead: function() {
-            var uid = Meteor.userId();
-            ActiveUsers.remove({uid: uid});
+            kill();
         },
         say: function(doc) {
             doc.time = new Date().getTime();
@@ -234,6 +245,9 @@ if (Meteor.isServer) {
 
     Meteor.setInterval(function() {
         var removeTime = new Date().getTime() - EVICTION_TIME;
-        ActiveUsers.remove({lastSeen: {$lt: removeTime}});
+        var to_delete = ActiveUsers.find({lastSeen: {$lt: removeTime}});
+        to_delete.forEach(function(active) {
+            kill(active.uid);
+        });
     }, HEARTBEAT_TIME);
 }
