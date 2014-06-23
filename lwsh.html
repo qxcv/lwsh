@@ -38,9 +38,13 @@
 
 <template name="pomostatus">
     <section id=pomostatus>
-        <span id=status-name>{{status.name}}</span> for
-        <time datetime={{status.until}}><span class=minutes></span> minutes and <span class=seconds></span>
+        {{#if status}}
+        <span id=status-name>{{toStateName status.type}}</span> for
+        <time datetime={{toISO status.ends}}><span class=minutes></span> minutes and <span class=seconds></span>
         seconds</time>.
+        {{else}}
+        No pomodoro running.
+        {{/if}}
     </section>
 </template>
 

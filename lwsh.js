@@ -1,5 +1,13 @@
 Messages = new Meteor.Collection("messages");
 ActiveUsers = new Meteor.Collection("actives");
+/* The CurrentPomodoro collection contains a single document with the following
+ * structure:
+ *      {
+ *          ends: <timestamp>, // indicates time at which current pomodoro or break ends
+ *          duration: <integer, minutes>, // indicates length of pomodoro or break
+ *          type: <string, 'pomo' or 'break'>
+ *      } */
+CurrentPomodoro = new Meteor.Collection("pomodoro");
 
 function forceGetUser(cb) {
     /* XXX: Try storing this in session, just in case user stuff gets evicted
@@ -31,10 +39,30 @@ function kill(uid) {
     }
 }
 
+function startPomo(time) {
+    // if there's no pomo running at the moment, start one.
+    var pomo = CurrentPomodoro.findOne({});
+    var now = new Date().getTime();
+    var method = undefined;
+    var doc = {
+            ends: now + 60 * 1000 * time,
+            duration: time,
+            type: 'pomo'
+    };
+    if (!pomo) {
+        // create a new one!
+        return CurrentPomodoro.insert(doc);
+    } else if (pomo.ends < now) {
+        // if the current pomo has actually expired
+        return CurrentPomodoro.update({_id: pomo._id}, doc);
+    }
+    return null;
+}
+
 SECONDS = 1000;
 HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
 EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
-POMODORO_REGEX = /(?:pomo(?:doro)?)?\w+(?:for)?\w*\:?(\d{1,3})$/i;
+POMODORO_REGEX = /^(:?for\s*)?\:\s*(\d{1,3})$/i;
 
 var aliveHandle = undefined;
 
@@ -72,7 +100,24 @@ if (Meteor.isClient) {
     }
 
     Template.pomostatus.status = function() {
-        return Session.get('pomodoro_status');
+        return CurrentPomodoro.findOne({});
+    };
+
+    Template.pomostatus.toISO = function(ms) {
+        var d = new Date();
+        d.setTime(ms);
+        return d.toISOString();
+    };
+
+    Template.pomostatus.toStateName = function(state) {
+        switch (state) {
+            case 'pomo':
+                return 'Pomdoro';
+            case 'break':
+                return 'Break';
+            default:
+                return '???';
+        }
     };
 
     Template.pomostatus.created = function() {
@@ -151,7 +196,7 @@ if (Meteor.isClient) {
             // TODO: is this actually working? I have no idea, but I suspect
             // it's triggering a Meteor bug when it tries to run alive() :(
             forceGetUser(function() {
-                Deps.autorun(Meteor.call.bind(Meteor.call, 'alive'));
+                Deps.autorun(_.partial(Meteor.call, 'alive'));
             });
         });
         /* Heartbeats */
@@ -167,8 +212,9 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
     Meteor.startup(function () {
-        // TODO: what if there are other clients connected with the same uid?
         Messages.remove({});
+        ActiveUsers.remove({});
+        CurrentPomodoro.remove({});
     });
 
     var _rt = function(){return true;};
@@ -217,6 +263,7 @@ if (Meteor.isServer) {
             return null;
         },
         dead: function() {
+            // TODO: what if there are other clients connected with the same uid?
             kill();
         },
         say: function(doc) {
@@ -235,10 +282,12 @@ if (Meteor.isServer) {
                 nick: Match.Optional(String)
             });
             Messages.insert(doc);
-            /* TODO: check the incoming message for pomodoro timer control
-             * strings.  I may want to split this out into a server method
-             * before I do that, though, since it doesn't make a lot of sense to
-             * be putting globs of logic into a .allow() clause :-) */
+            var match = POMODORO_REGEX.exec(doc.message);
+            if (match && match[2]) {
+                var time = parseInt(match[2]);
+                if (time <= 0 || time > 999) return true;
+                return !!startPomo(time);
+            }
             return true;
         },
     });
