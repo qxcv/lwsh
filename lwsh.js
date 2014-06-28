@@ -258,6 +258,7 @@ if (Meteor.isServer) {
                 return time;
             } else {
                 // what if there's no UID?
+                // technically we need to create a new account
                 // XXX to fix
             }
             return null;

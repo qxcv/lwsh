@@ -6,20 +6,62 @@
         </title>
         <meta charset=utf-8>
         <script>
-            function getImage() {
+            document.onreadystatechange = function() {
+                if (document.readyState !== "complete") return;
+
+                var PeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+                var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+                var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
+                navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+
+                if (!navigator.getUserMedia || !PeerConnection || !IceCandidate
+                 || !SessionDescription) {
+                     console.log('No WebRTC support detected :(');
+                     return;
+                 }
+
+                 var pcServers = {
+                     iceServers: [
+                         {url: "stun:stun.l.google.com:19302"},
+                         {url: "stun:numb.viagenie.ca"},
+                         {url: "turn:numb.viagenie.ca",
+                          credential: "b2cfad21152222d1d4105cd2364fad4c05eaa7",
+                          username: "sam+pubturn@qcxv.net"},
+                     ],
+                 };
+
+                 var pcOptions = {
+                     optional: [
+                         {DtlsSrtpKeyAgreement: true},
+                         {RtpDataChannels: true}
+                     ]
+                 };
+
                 navigator.mozGetUserMedia({video: true}, function(stream) {
                     var ve = document.querySelector('video');
                     ve.mozSrcObject = stream;
                     ve.play();
+                    //document.querySelector('#snapshot').onclick = function() {
+                    window.setInterval(function() {
+                        var ratio = ve.videoHeight / ve.videoWidth;
+                        var c = document.createElement('canvas');
+                        c.width = ve.width;
+                        c.height = ve.height;
+                        var ctx = c.getContext('2d');
+                        var width = c.height / ratio;
+                        ctx.drawImage(ve, (c.width - width) / 2, 0, width, c.height);
+                        document.body.appendChild(c);
+                    }, 30 * 1000);
                 }, function(error) {
                     alert("Haven't got it :(");
                 });
             }
-
-            getImage();
         </script>
     </head>
     <body>
         <video width=300 height=200></video>
+        <a href=# id=snapshot>Take snapshot</a>
+        <br/>
+        <canvas width=300 height=200 id=image></canvas>
     </body>
 </html>
