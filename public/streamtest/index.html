@@ -6,6 +6,24 @@
         </title>
         <meta charset=utf-8>
         <script>
+            function getFrameCanvas() {
+                var ve = document.querySelector('video');
+                var c = document.createElement('canvas');
+                c.width = ve.videoWidth;
+                c.height = ve.videoHeight;
+                var ctx = c.getContext('2d');
+                ctx.drawImage(ve, 0, 0);
+                return c;
+            }
+
+            function getFrame(c) {
+                if (!c) {
+                    c = getFrameCanvas();
+                }
+                var ctx = c.getContext('2d');
+                return ctx.getImageData(0, 0, c.width, c.height);
+            }
+
             document.onreadystatechange = function() {
                 if (document.readyState !== "complete") return;
 
