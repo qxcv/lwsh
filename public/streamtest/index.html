@@ -6,6 +6,7 @@
         </title>
         <meta charset=utf-8>
         <script>
+            prev = null;
             function getFrameCanvas() {
                 var ve = document.querySelector('video');
                 var c = document.createElement('canvas');
@@ -24,6 +25,21 @@
                 return ctx.getImageData(0, 0, c.width, c.height);
             }
 
+            function difference(i1, i2, dest) {
+                for (var rowOffset = 0; rowOffset < i1.width * i1.height *
+                    4; rowOffset += i1.width * 4) {
+                    for (var col = 0; col < i1.width * 4; col++) {
+                        var offset = rowOffset + col;
+                        if (col % 4 == 3) {
+                            dest.data[offset] = 255;
+                        } else {
+                            dest.data[offset] = Math.abs(i1.data[offset] - i2.data[offset]);
+                        }
+                    }
+                }
+            }
+
+
             document.onreadystatechange = function() {
                 if (document.readyState !== "complete") return;
 
@@ -36,40 +52,48 @@
                  || !SessionDescription) {
                      console.log('No WebRTC support detected :(');
                      return;
-                 }
+                }
 
-                 var pcServers = {
-                     iceServers: [
-                         {url: "stun:stun.l.google.com:19302"},
-                         {url: "stun:numb.viagenie.ca"},
-                         {url: "turn:numb.viagenie.ca",
-                          credential: "b2cfad21152222d1d4105cd2364fad4c05eaa7",
-                          username: "sam+pubturn@qcxv.net"},
-                     ],
-                 };
+                var pcServers = {
+                    iceServers: [
+                        {url: "stun:stun.l.google.com:19302"},
+                        {url: "stun:numb.viagenie.ca"},
+                        {url: "turn:numb.viagenie.ca",
+                         credential: "b2cfad21152222d1d4105cd2364fad4c05eaa7",
+                         username: "sam+pubturn@qcxv.net"},
+                    ],
+                };
 
-                 var pcOptions = {
-                     optional: [
-                         {DtlsSrtpKeyAgreement: true},
-                         {RtpDataChannels: true}
-                     ]
-                 };
+                var pcOptions = {
+                    optional: [
+                        {DtlsSrtpKeyAgreement: true},
+                        {RtpDataChannels: true}
+                    ]
+                };
 
                 navigator.mozGetUserMedia({video: true}, function(stream) {
                     var ve = document.querySelector('video');
                     ve.mozSrcObject = stream;
                     ve.play();
-                    //document.querySelector('#snapshot').onclick = function() {
+                    var ce = document.createElement('canvas');
+                    ce.width = ve.videoWidth;
+                    ce.height = ve.videoHeight;
+                    document.body.appendChild(ce);
                     window.setInterval(function() {
-                        var ratio = ve.videoHeight / ve.videoWidth;
-                        var c = document.createElement('canvas');
-                        c.width = ve.width;
-                        c.height = ve.height;
-                        var ctx = c.getContext('2d');
-                        var width = c.height / ratio;
-                        ctx.drawImage(ve, (c.width - width) / 2, 0, width, c.height);
-                        document.body.appendChild(c);
-                    }, 30 * 1000);
+                        if (!ce.width || !ce.height) {
+                            ce.width = ve.videoWidth;
+                            ce.height = ve.videoHeight;
+                            return;
+                        }
+                        var ctx = ce.getContext('2d');
+                        var id = getFrame();
+                        if (prev) {
+                            var newData = ctx.createImageData(ce.width, ce.height);
+                            difference(id, prev, newData);
+                            ctx.putImageData(newData, 0, 0);
+                        }
+                        prev = id;
+                    }, 1/15 * 1000);
                 }, function(error) {
                     alert("Haven't got it :(");
                 });
@@ -80,6 +104,5 @@
         <video width=300 height=200></video>
         <a href=# id=snapshot>Take snapshot</a>
         <br/>
-        <canvas width=300 height=200 id=image></canvas>
     </body>
 </html>
