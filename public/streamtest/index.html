@@ -25,51 +25,33 @@
                 return ctx.getImageData(0, 0, c.width, c.height);
             }
 
-            function difference(i1, i2, dest) {
-                for (var rowOffset = 0; rowOffset < i1.width * i1.height *
-                    4; rowOffset += i1.width * 4) {
-                    for (var col = 0; col < i1.width * 4; col++) {
-                        var offset = rowOffset + col;
-                        if (col % 4 == 3) {
-                            dest.data[offset] = 255;
-                        } else {
-                            dest.data[offset] = Math.abs(i1.data[offset] - i2.data[offset]);
-                        }
-                    }
+            function encodeDifference(i1, i2, dest) {
+                for (var pixelOffset = 0; pixelOffset < i1.data.length; pixelOffset += 4) {
+                    dest.data[pixelOffset] = (i1.data[pixelOffset] - i2.data[pixelOffset] + 255) / 2;
+                    dest.data[pixelOffset + 1] = (i1.data[pixelOffset + 1] - i2.data[pixelOffset + 1] + 255) / 2;
+                    dest.data[pixelOffset + 2] = (i1.data[pixelOffset + 2] - i2.data[pixelOffset + 2] + 255) / 2;
+                    dest.data[pixelOffset + 3] = 255;
                 }
             }
 
+            function applyDifference(source, delta) {
+                for (var pixelOffset = 0; pixelOffset < source.data.length; pixelOffset += 4) {
+                    source.data[pixelOffset] += delta.data[pixelOffset] * 2 - 255;
+                    source.data[pixelOffset + 1] += delta.data[pixelOffset + 1] * 2 - 255;
+                    source.data[pixelOffset + 2] += delta.data[pixelOffset + 2] * 2 - 255;
+                    source.data[pixelOffset + 3] = 255;
+                }
+            }
 
             document.onreadystatechange = function() {
                 if (document.readyState !== "complete") return;
 
-                var PeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-                var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
-                var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
                 navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
 
-                if (!navigator.getUserMedia || !PeerConnection || !IceCandidate
-                 || !SessionDescription) {
+                if (!navigator.getUserMedia) {
                      console.log('No WebRTC support detected :(');
                      return;
                 }
-
-                var pcServers = {
-                    iceServers: [
-                        {url: "stun:stun.l.google.com:19302"},
-                        {url: "stun:numb.viagenie.ca"},
-                        {url: "turn:numb.viagenie.ca",
-                         credential: "b2cfad21152222d1d4105cd2364fad4c05eaa7",
-                         username: "sam+pubturn@qcxv.net"},
-                    ],
-                };
-
-                var pcOptions = {
-                    optional: [
-                        {DtlsSrtpKeyAgreement: true},
-                        {RtpDataChannels: true}
-                    ]
-                };
 
                 navigator.mozGetUserMedia({video: true}, function(stream) {
                     var ve = document.querySelector('video');
@@ -79,6 +61,9 @@
                     ce.width = ve.videoWidth;
                     ce.height = ve.videoHeight;
                     document.body.appendChild(ce);
+                    var fe = document.querySelector('#framesize');
+                    var de = document.querySelector('#diffsize');
+                    var ie = document.querySelector('#swag');
                     window.setInterval(function() {
                         if (!ce.width || !ce.height) {
                             ce.width = ve.videoWidth;
@@ -86,14 +71,22 @@
                             return;
                         }
                         var ctx = ce.getContext('2d');
+                        function tokb(s) {
+                            return 0.75 * s / 1024;
+                        }
+                        var _c = getFrameCanvas();
+                        fe.innerHTML = tokb(_c.toDataURL('image/jpeg', 0.5).length);
                         var id = getFrame();
                         if (prev) {
                             var newData = ctx.createImageData(ce.width, ce.height);
-                            difference(id, prev, newData);
+                            encodeDifference(id, prev, newData);
                             ctx.putImageData(newData, 0, 0);
+                            var du = ce.toDataURL('image/jpeg', 0.5);
+                            de.innerHTML = tokb(du.length);
+                            ie.src = du;
                         }
                         prev = id;
-                    }, 1/15 * 1000);
+                    }, 1/5 * 1000);
                 }, function(error) {
                     alert("Haven't got it :(");
                 });
@@ -104,5 +97,8 @@
         <video width=300 height=200></video>
         <a href=# id=snapshot>Take snapshot</a>
         <br/>
+        Frame size: <span id=framesize></span><br/>
+        Diff size: <span id=diffsize></span><br/>
+        <img id=swag>
     </body>
 </html>
