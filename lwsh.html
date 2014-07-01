@@ -1,49 +1,59 @@
 <head>
-  <title>Study hall</title>
-  <link rel=stylesheet href=fa/css/font-awesome.min.css>
-  <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+    <title>Study hall</title>
+    <link rel=stylesheet href=fa/css/font-awesome.min.css>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
 </head>
 
 <body>
-  <header>study hall</header>
+    <header>study hall</header>
 
-  {{> cameras}}
+    {{> cameras}}
 
-  {{> pomostatus}}
+    {{> pomostatus}}
 
-  {{> chatbox}}
+    {{> chatbox}}
 </body>
 
 <template name="cameras">
-  <section id=cameras>
-    <div id=nocameras>
-        <div class="icons fa-stack">
-            <i class="fa fa-camera fa-stack-1x"></i>
-            <i class="fa fa-ban fa-stack-2x"></i>
-        </div>
-        <div>
-            Nobody has their camera turned on. Why not turn yours own?<br/>
-            Oh, that's right&mdash;because THERE IS NO CAMERA SUPPORT YET.
-        </div>
-
+    <section id=cameras>
+        {{#each activeCameras}}
+            {{> camera}}
+        {{else}}
+            <div id=nocameras>
+                <div class="icons fa-stack">
+                    <i class="fa fa-camera fa-stack-1x"></i>
+                    <i class="fa fa-ban fa-stack-2x"></i>
+                </div>
+                <div>
+                    Nobody has their camera turned on. Why not turn yours own?<br/>
+                    Oh, that's right&mdash;because THERE IS NO CAMERA SUPPORT YET.
+                </div>
+            </div>
+        {{/each}}
+    </section>
+    <div id=camerabuttons>
+        <a href=# id=cameraoptions class="fa fa-camera"
+           title="Start/stop broadcasting"></a>
+        <a href=# id=expandcollapse class="fa fa-chevron-up"
+           title="Show/hide cameras"></a>
     </div>
-  </section>
-  <div id=camerabuttons>
-      <a href=# id=cameraoptions class="fa fa-camera"
-          title="Start/stop broadcasting"></a>
-      <a href=# id=expandcollapse class="fa fa-chevron-up"
-          title="Show/hide cameras"></a>
-  </div>
+</template>
+
+<template name="camera">
+    <div class=camera-frame>
+        <span class=title>{{uid}}</span>
+        <canvas class=camera width=320 height=240></canvas>
+    </div>
 </template>
 
 <template name="pomostatus">
     <section id=pomostatus>
         {{#if status}}
-        <span id=status-name>{{toStateName status.type}}</span> for
-        <time datetime={{toISO status.ends}}><span class=minutes></span> minutes and <span class=seconds></span>
-        seconds</time>.
+            <span id=status-name>{{toStateName status.type}}</span> for <time
+            datetime={{toISO status.ends}}><span class=minutes></span> minutes
+            and <span class=seconds></span> seconds</time>.
         {{else}}
-        No pomodoro running.
+            No pomodoro running.
         {{/if}}
     </section>
 </template>
@@ -53,9 +63,9 @@
         <table height=500px>
             <tr>
                 <td id=users>
-                    {{# each occupants }}
+                    {{#each occupants}}
                         <div class=user>
-                            {{#if nick }}
+                            {{#if nick}}
                                 {{nick}}
                             {{else}}
                                 {{uid}}
@@ -66,7 +76,7 @@
                 <td id=scrollback-wrapper>
                     <div id=scrollback>
                         {{#each messages}}
-                            {{> message }}
+                            {{> message}}
                         {{/each}}
                     </div>
                 </td>
@@ -75,7 +85,9 @@
                 <td id=mynick>
                     <input type=text placeholder="Enter nick">
                 </td>
-                <td><input type=text placeholder="Type away!" id=msgin></td>
+                <td>
+                    <input type=text placeholder="Type away!" id=msgin>
+                </td>
             </tr>
         </table>
     </section>
@@ -83,17 +95,17 @@
 
 <template name="message">
     {{#if nick}}
-    <div class=entry>
-        <div class=uid>
-            {{nick}}:
+        <div class=entry>
+            <div class=uid>
+                {{nick}}:
+            </div>
+            <div class=message>
+                {{message}}
+            </div>
         </div>
-        <div class=message>
+    {{else}}
+        <div class=announcement>
             {{message}}
         </div>
-    </div>
-    {{else}}
-    <div class=announcement>
-        {{message}}
-    </div>
     {{/if}}
 </template>

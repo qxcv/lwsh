@@ -26,6 +26,35 @@ function forceGetUser(cb) {
     }, cb);
 }
 
+function alive() {
+    var uid = Meteor.userId();
+    if (uid) {
+        var time = new Date().getTime();
+        var u = Meteor.user();
+        var nick = undefined;
+        if (u && u.profile && u.profile.nick) {
+            nick = u.profile.nick;
+        }
+        if (!ActiveUsers.findOne({uid: uid})) {
+            // Make sure we tell the room that they've joined!
+            Messages.insert({
+                time: time,
+                message: (nick ? nick : Meteor.userId()) + ' joined the room',
+            });
+        }
+        ActiveUsers.upsert({uid: uid},
+            {$set:
+                {lastSeen: time,
+                 nick: nick}});
+        return time;
+    } else {
+        // what if there's no UID?
+        // technically we need to create a new account
+        // XXX to fix
+    }
+    return null;
+};
+
 function kill(uid) {
     if (!uid) uid = Meteor.userId();
     var name = uid;
@@ -68,6 +97,7 @@ var aliveHandle = undefined;
 
 if (Meteor.isClient) {
     Template.cameras.hidden = false;
+
     Template.cameras.events({
         'click #expandcollapse': function(templ) {
             /* XXX: There is probably a more elegant way of doing this (like
@@ -88,16 +118,27 @@ if (Meteor.isClient) {
             }
         },
         'click #cameraoptions': function() {
-            // toggle webcam broadcast
+            Meteor.call('enableCam');
         }
     });
 
-    if (Session.get('pomodoro_status') === undefined) {
-        Session.set('pomodoro_status',
-                {type: 'running',
-                 name: 'Pomodoro running',
-                 until: '2038-01-19T03:14Z'});
-    }
+    Template.cameras.activeCameras = function() {
+        // return uid + nick of everyone with an active cam
+        return ActiveUsers.find({camEnabled: true});
+    };
+
+    Template.camera.created = function() {
+        // logic for creating a camera
+        // should set up a Deps.autorun handler for incoming webcam frames
+        this._autorunHandle = Deps.autorun(function() {
+        });
+    };
+
+    Template.camera.destroyed = function() {
+        // logic for destroying a camera
+        // should stop the Deps.autorun handler from .created()
+        this._autorunHandle.stop();
+    };
 
     Template.pomostatus.status = function() {
         return CurrentPomodoro.findOne({});
@@ -195,6 +236,10 @@ if (Meteor.isClient) {
         Deps.autorun(function() {
             // TODO: is this actually working? I have no idea, but I suspect
             // it's triggering a Meteor bug when it tries to run alive() :(
+            // Actually, this could fix our problem with active users getting
+            // kicked off when another login sends dead(). Since the dead() will
+            // update ActiveUsers, we *might* get this to re-run. This requires
+            // some changes here, so XXX
             forceGetUser(function() {
                 Deps.autorun(_.partial(Meteor.call, 'alive'));
             });
@@ -230,43 +275,14 @@ if (Meteor.isServer) {
     });
 
     // XXX turn off autopublish before deploy and add this in
+    // also get the other collections and autopublish them
     /*Meteor.publish('messages', function() {
         return Messages.find({}, {sort: {time: -1}, limit: 200});
     });*/
 
     Meteor.methods({
-        alive: function() {
-            var uid = Meteor.userId();
-            if (uid) {
-                var time = new Date().getTime();
-                var u = Meteor.user();
-                var nick = undefined;
-                if (u && u.profile && u.profile.nick) {
-                    nick = u.profile.nick;
-                }
-                if (!ActiveUsers.findOne({uid: uid})) {
-                    // Make sure we tell the room that they've joined!
-                    Messages.insert({
-                        time: time,
-                        message: (nick ? nick : Meteor.userId()) + ' joined the room',
-                    });
-                }
-                ActiveUsers.upsert({uid: uid},
-                    {$set:
-                        {lastSeen: time,
-                         nick: nick}});
-                return time;
-            } else {
-                // what if there's no UID?
-                // technically we need to create a new account
-                // XXX to fix
-            }
-            return null;
-        },
-        dead: function() {
-            // TODO: what if there are other clients connected with the same uid?
-            kill();
-        },
+        alive: alive,
+        dead: kill,
         say: function(doc) {
             doc.time = new Date().getTime();
             doc.uid = Meteor.userId();
@@ -291,6 +307,16 @@ if (Meteor.isServer) {
             }
             return true;
         },
+        enableCam: function() {
+            // XXX should alive() or do something sensible if the user is not in
+            // actives
+            var uid = Meteor.userId();
+            return ActiveUsers.update({uid: uid}, {$set: {camEnabled: true}}) > 0;
+        },
+        disableCam: function() {
+            var uid = Meteor.userId();
+            return ActiveUsers.update({uid: uid}, {$set: {camEnabled: false}}) > 0;
+        }
     });
 
     Meteor.setInterval(function() {
