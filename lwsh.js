@@ -99,7 +99,7 @@ if (Meteor.isClient) {
     Template.cameras.hidden = false;
 
     Template.cameras.events({
-        'click #expandcollapse': function(templ) {
+        'click #expandcollapse': function() {
             /* XXX: There is probably a more elegant way of doing this (like
              * using session variables or something), so I should replace this
              * code once I've learnt more Meteor. */
@@ -117,9 +117,20 @@ if (Meteor.isClient) {
                 Template.cameras.hidden = true;
             }
         },
-        'click #cameraoptions': function() {
-            Meteor.call('enableCam');
-        }
+        'click #enablecam': function(evt) {
+            Meteor.call('enableCam', function(error, result) {
+                if (!error && result) {
+                    evt.currentTarget.id = 'disablecam';
+                }
+            });
+        },
+        'click #disablecam': function(evt) {
+            Meteor.call('disableCam', function(error, result) {
+                if (!error && result) {
+                    evt.currentTarget.id = 'enablecam';
+                }
+            });
+        },
     });
 
     Template.cameras.activeCameras = function() {
@@ -131,6 +142,8 @@ if (Meteor.isClient) {
         // logic for creating a camera
         // should set up a Deps.autorun handler for incoming webcam frames
         this._autorunHandle = Deps.autorun(function() {
+            //var frame = ActiveUsers.find({uid: }, ).fetch();
+            //if (!frame) return;
         });
     };
 
