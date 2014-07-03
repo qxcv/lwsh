@@ -88,6 +88,24 @@ function startPomo(time) {
     return null;
 }
 
+function encodeFrameDelta(i1, i2, dest) {
+    for (var pixelOffset = 0; pixelOffset < i1.data.length; pixelOffset += 4) {
+        dest.data[pixelOffset] = (i1.data[pixelOffset] - i2.data[pixelOffset] + 255) / 2;
+        dest.data[pixelOffset + 1] = (i1.data[pixelOffset + 1] - i2.data[pixelOffset + 1] + 255) / 2;
+        dest.data[pixelOffset + 2] = (i1.data[pixelOffset + 2] - i2.data[pixelOffset + 2] + 255) / 2;
+        dest.data[pixelOffset + 3] = 255;
+    }
+}
+
+function applyFrameDelta(source, delta) {
+    for (var pixelOffset = 0; pixelOffset < source.data.length; pixelOffset += 4) {
+        source.data[pixelOffset] += delta.data[pixelOffset] * 2 - 255;
+        source.data[pixelOffset + 1] += delta.data[pixelOffset + 1] * 2 - 255;
+        source.data[pixelOffset + 2] += delta.data[pixelOffset + 2] * 2 - 255;
+        source.data[pixelOffset + 3] = 255;
+    }
+}
+
 SECONDS = 1000;
 HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
 EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
@@ -141,9 +159,42 @@ if (Meteor.isClient) {
     Template.camera.created = function() {
         // logic for creating a camera
         // should set up a Deps.autorun handler for incoming webcam frames
+        var thing = this;
         this._autorunHandle = Deps.autorun(function() {
-            //var frame = ActiveUsers.find({uid: }, ).fetch();
-            //if (!frame) return;
+            var uid = thing.data.uid;
+            if (!uid) return;
+            var frame = ActiveUsers.findOne({uid: uid}, {fields: {latestFrame: 1}});
+            if (!frame) return;
+            var ce = thing.$('.camera')[0];
+            var ctx = ce.getContext('2d');
+            // for now, I'll store everything in frame.dataURL and hope that
+            // Socket.IO gzips everything on the wire :-)
+            // I can probably confirm this myself at some point XXX
+            if (frame.type == 'i' || frame.type == 'Δ') {
+                var im = new Image();
+                // NB: this all assumes that the given image is the same width
+                // and height as our frame, or at least ratio-compatible with
+                // it.
+                if (frame.type == 'i') {
+                    // I-frames carry the entire image, so we can draw it
+                    // directly
+                    im.onload = function() {
+                        ctx.drawImage(this, 0, 0, ce.width, ce.height);
+                    }
+                } else {
+                    // delta frames only carry a difference from the last image
+                    im.onload = function() {
+                        var currentData = ctx.getImageData();
+                        ctx.drawImage(this, 0, 0, ce.width, ce.height);
+                        var deltaData = ctx.getImageData(0, 0, ce.width, ce.height);
+                        applyFrameDelta(currentData, deltaData);
+                        ctx.putImageData(currentData, 0, 0);
+                    }
+                }
+                im.src = frame.dataURL;
+            } else {
+                console.log('Unknown frame type "' + frame.type + '" from UID ' + uid);
+            }
         });
     };
 
