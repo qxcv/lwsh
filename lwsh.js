@@ -1,3 +1,8 @@
+/* Copyright 2014 Sam To... actually, no. I probably shouldn't put my full name
+ * there in case of retribution ;-)
+ *
+ * Anyway, full license (Apache V2) in LICENSE file of repository */
+
 Messages = new Meteor.Collection("messages");
 ActiveUsers = new Meteor.Collection("actives");
 /* The CurrentPomodoro collection contains a single document with the following
