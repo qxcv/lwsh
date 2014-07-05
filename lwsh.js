@@ -139,6 +139,34 @@ if (Meteor.isClient) {
             Meteor.call('enableCam', function(error, result) {
                 if (!error && result) {
                     evt.currentTarget.id = 'disablecam';
+                    // AWESOME! Now we can set up the camera!
+                    navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+
+                    if (!navigator.getUserMedia) {
+                         console.log('No WebRTC support detected :(');
+                         return;
+                    }
+
+                    // XXX Firefox-specific
+                    navigator.mozGetUserMedia({video: true}, function(stream) {
+                        var ve = document.createElement('video');
+                        ve.mozSrcObject = stream;
+                        ve.play();
+                        var ce = document.createElement('canvas');
+                        ce.width = 320; // XXX
+                        ce.height = 240; // XXX
+                        window.setInterval(function() {
+                            var ctx = ce.getContext('2d');
+                            ctx.drawImage(ve, 0, 0, ce.width, ce.height);
+                            var msg = {
+                                type: 'i',
+                                dataURL: ce.toDataURL('image/jpeg', 0.8)
+                            };
+                            Meteor.call('sendFrame', msg);
+                        }, 1/5 * 1000);
+                    }, function(error) {
+                        alert("Haven't got it :(");
+                    });
                 }
             });
         },
@@ -164,7 +192,8 @@ if (Meteor.isClient) {
             var uid = thisTemplate.data.uid;
             if (!uid) return;
             var frame = ActiveUsers.findOne({uid: uid}, {fields: {latestFrame: 1}});
-            if (!frame) frame = {type: null};
+            if (!frame) frame = {latestFrame: {type: null}};
+            var frame = frame.latestFrame;
             try {
                 var ce = thisTemplate.$('.camera')[0];
             } catch (ex) {
@@ -385,6 +414,15 @@ if (Meteor.isServer) {
         disableCam: function() {
             var uid = Meteor.userId();
             return ActiveUsers.update({uid: uid}, {$set: {camEnabled: false}}) > 0;
+        },
+        sendFrame: function(msg) {
+            var uid = Meteor.userId();
+            if (!uid) {
+                console.log('No UID in frame upload code :(');
+                return;
+            }
+            // XXX need to validate!
+            ActiveUsers.update({uid: uid}, {$set: {latestFrame: msg}});
         }
     });
 
