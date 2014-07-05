@@ -5,7 +5,8 @@ Todo List
 + Fix the 'die' message so that it doesn't kick off duplicated clients. At the
   moment, the clients will appear to die until they send their next alive() :P
 + Add sounds for chat and pomodoro events. I'm thinking 1-2s vuvuzela sample for chat
-  messages and siren for pomodoro events.
+  messages and siren for pomodoro events. The tricky bit here is figuring out
+  how to add an "add message" handler into the reactive architecture.
 + Work on video streaming of some sort. I'm not 100% clear on how I'll do this,
   but I think it will be WebRTC/TURN based. I may need to implement a supernode
   architecture if there are lots of clients (since n^2/2 connections = hell).

@@ -159,13 +159,18 @@ if (Meteor.isClient) {
     Template.camera.created = function() {
         // logic for creating a camera
         // should set up a Deps.autorun handler for incoming webcam frames
-        var thing = this;
+        var thisTemplate = this;
         this._autorunHandle = Deps.autorun(function() {
-            var uid = thing.data.uid;
+            var uid = thisTemplate.data.uid;
             if (!uid) return;
             var frame = ActiveUsers.findOne({uid: uid}, {fields: {latestFrame: 1}});
-            if (!frame) return;
-            var ce = thing.$('.camera')[0];
+            if (!frame) frame = {type: null};
+            try {
+                var ce = thisTemplate.$('.camera')[0];
+            } catch (ex) {
+                console.log('Template.camera.created got DOM exception: ' + ex);
+                return;
+            }
             var ctx = ce.getContext('2d');
             // for now, I'll store everything in frame.dataURL and hope that
             // Socket.IO gzips everything on the wire :-)
@@ -226,10 +231,10 @@ if (Meteor.isClient) {
     };
 
     Template.pomostatus.created = function() {
-        var thing = this;
+        var thisTemplate = this;
 
         this._timerHandle = Meteor.setInterval(function() {
-            var timeElem = this.$('time');
+            var timeElem = thisTemplate.$('time');
             var endpoint = new Date(timeElem.attr('datetime'));
             var now = new Date();
             var deltaSeconds = (endpoint - now)/1000;
