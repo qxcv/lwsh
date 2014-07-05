@@ -13,3 +13,11 @@ Todo List
   EDIT: I'm going to just do server-based streaming with MJPEG (or maybe MJPEG +
   delta encoding). I'll add WebRTC when and if it gets traction amongst browser
   vendors.
++ In the current frame upload code, I need to:
+  - Implement delta frames
+  - Refactor frame upload code so that it uses global video/canvas elements
+  - Implement camera disabling code (which will mutate said elements)
+  - Instead of using setInterval, make it so that the upload code is responsible
+    for rescheduling itself in an appropriate amount of time (so that we don't
+    end up uploading several frames at once). Also remember that I need to stop
+    the handler if the disable code tells us to stop.

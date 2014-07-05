@@ -140,6 +140,7 @@ if (Meteor.isClient) {
                 if (!error && result) {
                     evt.currentTarget.id = 'disablecam';
                     // AWESOME! Now we can set up the camera!
+                    // XXX TODO: Refactor all of this as per TODO
                     navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
 
                     if (!navigator.getUserMedia) {
