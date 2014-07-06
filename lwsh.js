@@ -119,7 +119,7 @@ EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
 // regex for detecting pomodoro control strings
 POMODORO_REGEX = /^(:?for\s*)?\:\s*(\d{1,3})$/i;
 // how often should we send I-frames?
-IFRAME_INTERVAL = 1 * SECONDS;
+IFRAME_INTERVAL = 0; // ALL THE DAMN TIME
 
 aliveHandle = undefined;
 currentCamera = {
@@ -226,7 +226,7 @@ if (Meteor.isClient) {
                                 ctx.putImageData(f.frame, 0, 0);
                                 f.frame = data;
                             }
-                            msg.dataURL = currentCamera.ce.toDataURL('image/jpeg', 0.8)
+                            msg.dataURL = currentCamera.ce.toDataURL('image/jpeg', 0.6)
                             Meteor.call('sendFrame', msg, function() {
                                 // XXX do frame-rate limiting code
                                 setTimeout(ivfunc, 1/5 * 1000);
