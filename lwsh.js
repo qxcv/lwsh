@@ -120,6 +120,9 @@ EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
 POMODORO_REGEX = /^(:?for\s*)?\:\s*(\d{1,3})$/i;
 // how often should we send I-frames?
 IFRAME_INTERVAL = 0; // ALL THE DAMN TIME
+// how fast should we upload video
+VIDEO_FPS = 12;
+MAX_NICK_LENGTH = 32;
 
 aliveHandle = undefined;
 currentCamera = {
@@ -131,6 +134,8 @@ currentCamera = {
         frameData: undefined,
         time: 0,
     },
+    objectURL: undefined,
+    stream: undefined,
 };
 
 if (Meteor.isClient) {
@@ -170,15 +175,23 @@ if (Meteor.isClient) {
                          return;
                     }
 
-                    // XXX Firefox-specific
                     navigator.getUserMedia({video: true}, function(stream) {
                         if (!currentCamera.enabled) {
                             delete currentCamera.ve;
                             delete currentCamera.ce;
+                            if (currentCamera.stream) {
+                                currentCamera.stream.stop();
+                            }
+                            if (currentCamera.objectURL) {
+                                URL.revokeObjectURL(currentCamera.objectURL);
+                            }
+                            delete currentCamera.objectURL;
                             return;
                         }
+                        currentCamera.stream = stream;
                         currentCamera.ve = document.createElement('video');
-                        currentCamera.ve.src = URL.createObjectURL(stream);
+                        currentCamera.objectURL = URL.createObjectURL(stream);
+                        currentCamera.ve.src = currentCamera.objectURL;
                         currentCamera.ve.play();
                         currentCamera.ce = document.createElement('canvas');
                         currentCamera.ce.width = 320; // XXX
@@ -187,6 +200,13 @@ if (Meteor.isClient) {
                             if (!currentCamera.enabled) {
                                 delete currentCamera.ve;
                                 delete currentCamera.ce;
+                                if (currentCamera.stream) {
+                                    currentCamera.stream.stop();
+                                }
+                                if (currentCamera.objectURL) {
+                                    URL.revokeObjectURL(currentCamera.objectURL);
+                                }
+                                delete currentCamera.objectURL;
                                 return;
                             }
                             var canvasAvailable = false;
@@ -229,7 +249,7 @@ if (Meteor.isClient) {
                             msg.dataURL = currentCamera.ce.toDataURL('image/jpeg', 0.6)
                             Meteor.call('sendFrame', msg, function() {
                                 // XXX do frame-rate limiting code
-                                setTimeout(ivfunc, 1/5 * 1000);
+                                setTimeout(ivfunc, 1000 / VIDEO_FPS);
                             });
                         }
                         ivfunc();
@@ -246,6 +266,13 @@ if (Meteor.isClient) {
                     delete currentCamera.ve;
                     delete currentCamera.ce;
                     evt.currentTarget.id = 'enablecam';
+                    if (currentCamera.stream) {
+                        currentCamera.stream.stop();
+                    }
+                    if (currentCamera.objectURL) {
+                        URL.revokeObjectURL(currentCamera.objectURL);
+                        delete currentCamera.objectURL;
+                    }
                 }
             });
         },
@@ -369,10 +396,8 @@ if (Meteor.isClient) {
         'keyup #mynick input': function(e) {
             var nick = $(e.target).val();
             forceGetUser(function() {
-                Meteor.users.update({_id: Meteor.userId()},
-                        {$set: {profile:
-                                   {nick: nick}}}
-                );
+                // XXX TODO prevent editing this directly.
+                Meteor.call('setNick', nick);
                 Meteor.call('alive');
             });
         },
@@ -432,17 +457,11 @@ if (Meteor.isServer) {
         CurrentPomodoro.remove({});
     });
 
+    // useful for setting denials/acceptances
     var _rt = function(){return true;};
-    Messages.deny({
-        remove: _rt,
-        update: _rt
-    });
-
-    ActiveUsers.deny({
-        remove: _rt,
-        update: _rt,
-        insert: _rt
-    });
+    // XXX prevent users from editing their user data from the client.
+    // Especially the nickname.
+    // At the moment it's a gaping hole in the app :P
 
     // XXX turn off autopublish before deploy and add this in
     // also get the other collections and autopublish them
@@ -498,6 +517,16 @@ if (Meteor.isServer) {
                 type: String,
             });
             return ActiveUsers.update({uid: uid}, {$set: {latestFrame: msg}}) > 0;
+        },
+        setNick: function(nick) {
+            check(nick, String);
+            nick = nick.slice(0, MAX_NICK_LENGTH);
+            nick = nick.trim();
+            if (nick.length < 1) return false;
+            return Meteor.users.update({_id: Meteor.userId()},
+                    {$set: {profile:
+                               {nick: nick}}}
+            ) > 0;
         }
     });
 

@@ -24,3 +24,8 @@ Todo List
     clients ;_;
 + Remove autopublish.
 + Refactor everything ruthlessly. The code is needlessly complex at the moment.
++ Fix the name overflow bug in the room occupants list. Also, put a length limit
+  on names ;-)
++ Implement a UID-based user icon system. This should distinguish imposters from
+  the genuine owners of a name (assuming that the genuine owners are sufficiently
+  well known).
