@@ -493,7 +493,10 @@ if (Meteor.isServer) {
                 console.log('No UID in frame upload code :(');
                 return false;
             }
-            // XXX need to validate!
+            check(msg, {
+                dataURL: String,
+                type: String,
+            });
             return ActiveUsers.update({uid: uid}, {$set: {latestFrame: msg}}) > 0;
         }
     });
