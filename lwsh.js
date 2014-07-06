@@ -93,16 +93,18 @@ function startPomo(time) {
     return null;
 }
 
-function encodeFrameDelta(i1, i2, dest) {
-    for (var pixelOffset = 0; pixelOffset < i1.data.length; pixelOffset += 4) {
-        dest.data[pixelOffset] = (i1.data[pixelOffset] - i2.data[pixelOffset] + 255) / 2;
-        dest.data[pixelOffset + 1] = (i1.data[pixelOffset + 1] - i2.data[pixelOffset + 1] + 255) / 2;
-        dest.data[pixelOffset + 2] = (i1.data[pixelOffset + 2] - i2.data[pixelOffset + 2] + 255) / 2;
-        dest.data[pixelOffset + 3] = 255;
+function encodeFrameDelta(original, now) {
+    // Calculate a frame delta and store it in `original`
+    for (var pixelOffset = 0; pixelOffset < now.data.length; pixelOffset += 4) {
+        original.data[pixelOffset] = (now.data[pixelOffset] - original.data[pixelOffset] + 255) / 2;
+        original.data[pixelOffset + 1] = (now.data[pixelOffset + 1] - original.data[pixelOffset + 1] + 255) / 2;
+        original.data[pixelOffset + 2] = (now.data[pixelOffset + 2] - original.data[pixelOffset + 2] + 255) / 2;
+        original.data[pixelOffset + 3] = 255;
     }
 }
 
 function applyFrameDelta(source, delta) {
+    // Apply a frame-delta to an original in-place
     for (var pixelOffset = 0; pixelOffset < source.data.length; pixelOffset += 4) {
         source.data[pixelOffset] += delta.data[pixelOffset] * 2 - 255;
         source.data[pixelOffset + 1] += delta.data[pixelOffset + 1] * 2 - 255;
@@ -111,12 +113,25 @@ function applyFrameDelta(source, delta) {
     }
 }
 
-SECONDS = 1000;
+SECONDS = 1000; // in ms
 HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
 EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
+// regex for detecting pomodoro control strings
 POMODORO_REGEX = /^(:?for\s*)?\:\s*(\d{1,3})$/i;
+// how often should we send I-frames?
+IFRAME_INTERVAL = 1 * SECONDS;
 
-var aliveHandle = undefined;
+aliveHandle = undefined;
+currentCamera = {
+    // undefined stuff is just here as a reminder that it needs to be filled :-)
+    ce: undefined,
+    ve: undefined,
+    enabled: false,
+    lastIFrame: {
+        frameData: undefined,
+        time: 0,
+    },
+};
 
 if (Meteor.isClient) {
     Template.cameras.hidden = false;
@@ -144,6 +159,8 @@ if (Meteor.isClient) {
             Meteor.call('enableCam', function(error, result) {
                 if (!error && result) {
                     evt.currentTarget.id = 'disablecam';
+                    currentCamera.enabled = true;
+
                     // AWESOME! Now we can set up the camera!
                     // XXX TODO: Refactor all of this as per TODO
                     navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
@@ -155,23 +172,69 @@ if (Meteor.isClient) {
 
                     // XXX Firefox-specific
                     navigator.mozGetUserMedia({video: true}, function(stream) {
-                        var ve = document.createElement('video');
-                        ve.mozSrcObject = stream;
-                        ve.play();
-                        var ce = document.createElement('canvas');
-                        ce.width = 320; // XXX
-                        ce.height = 240; // XXX
-                        window.setInterval(function() {
-                            var ctx = ce.getContext('2d');
-                            ctx.drawImage(ve, 0, 0, ce.width, ce.height);
-                            var msg = {
-                                type: 'i',
-                                dataURL: ce.toDataURL('image/jpeg', 0.8)
-                            };
-                            Meteor.call('sendFrame', msg);
-                        }, 1/5 * 1000);
+                        if (!currentCamera.enabled) {
+                            delete currentCamera.ve;
+                            delete currentCamera.ce;
+                            return;
+                        }
+                        currentCamera.ve = document.createElement('video');
+                        currentCamera.ve.mozSrcObject = stream;
+                        currentCamera.ve.play();
+                        currentCamera.ce = document.createElement('canvas');
+                        currentCamera.ce.width = 320; // XXX
+                        currentCamera.ce.height = 240; // XXX
+                        function ivfunc() {
+                            if (!currentCamera.enabled) {
+                                delete currentCamera.ve;
+                                delete currentCamera.ce;
+                                return;
+                            }
+                            var canvasAvailable = false;
+                            try {
+                                var ctx = currentCamera.ce.getContext('2d');
+                                ctx.drawImage(currentCamera.ve, 0, 0, currentCamera.ce.width, currentCamera.ce.height);
+                                var canvasAvailable = true;
+                            } catch (ex) {
+                                // do nothing but log, we get DOM errors
+                                // sometimes :-(
+                                //
+                                // Google-able string: "NS_ERROR_NOT_AVAILABLE:
+                                // Component not available". Google suggests
+                                // that it's because the video frame isn't ready
+                                // to draw (paradoxically).
+                                //
+                                // However, this exception is always thrown
+                                // using incorrect line information (!!) when it
+                                // happens in Firefox. It really happens here,
+                                // or is triggered by the above code.
+                                console.log('ivfunc() got error ' + ex);
+                            }
+                            var f = currentCamera.lastIFrame;
+                            var now = new Date().getTime();
+                            var msg = {type: 'i'};
+                            if (f.time + IFRAME_INTERVAL < now || !f.frame && canvasAvailable) {
+                                // Sending an I-frame
+                                var ctx = currentCamera.ce.getContext('2d');
+                                f.frame = ctx.getImageData(0, 0, currentCamera.ce.width, currentCamera.ce.height);
+                                f.time = now;
+                            } else if (canvasAvailable) {
+                                // Send a Δ-frame
+                                msg.type = 'Δ';
+                                var ctx = currentCamera.ce.getContext('2d');
+                                var data = ctx.getImageData(0, 0, currentCamera.ce.width, currentCamera.ce.height);
+                                encodeFrameDelta(f.frame, data);
+                                ctx.putImageData(f.frame, 0, 0);
+                                f.frame = data;
+                            }
+                            msg.dataURL = currentCamera.ce.toDataURL('image/jpeg', 0.8)
+                            Meteor.call('sendFrame', msg, function() {
+                                // XXX do frame-rate limiting code
+                                setTimeout(ivfunc, 1/5 * 1000);
+                            });
+                        }
+                        ivfunc();
                     }, function(error) {
-                        alert("Haven't got it :(");
+                        console.log("Haven't got it :(");
                     });
                 }
             });
@@ -179,6 +242,9 @@ if (Meteor.isClient) {
         'click #disablecam': function(evt) {
             Meteor.call('disableCam', function(error, result) {
                 if (!error && result) {
+                    currentCamera.enabled = false;
+                    delete currentCamera.ve;
+                    delete currentCamera.ce;
                     evt.currentTarget.id = 'enablecam';
                 }
             });
@@ -224,7 +290,7 @@ if (Meteor.isClient) {
                 } else {
                     // delta frames only carry a difference from the last image
                     im.onload = function() {
-                        var currentData = ctx.getImageData();
+                        var currentData = ctx.getImageData(0, 0, ce.width, ce.height);
                         ctx.drawImage(this, 0, 0, ce.width, ce.height);
                         var deltaData = ctx.getImageData(0, 0, ce.width, ce.height);
                         applyFrameDelta(currentData, deltaData);
@@ -425,10 +491,10 @@ if (Meteor.isServer) {
             var uid = Meteor.userId();
             if (!uid) {
                 console.log('No UID in frame upload code :(');
-                return;
+                return false;
             }
             // XXX need to validate!
-            ActiveUsers.update({uid: uid}, {$set: {latestFrame: msg}});
+            return ActiveUsers.update({uid: uid}, {$set: {latestFrame: msg}}) > 0;
         }
     });
 

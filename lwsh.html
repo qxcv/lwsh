@@ -41,7 +41,13 @@
 
 <template name="camera">
     <div class=camera-frame>
-        <span class=title>{{uid}}</span>
+        <span class=title>
+            {{#if nick}}
+                {{nick}}
+            {{else}}
+                {{uid}}
+            {{/if}}
+        </span>
         <canvas class=camera width=320 height=240></canvas>
     </div>
 </template>
