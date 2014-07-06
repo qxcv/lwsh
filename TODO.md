@@ -2,6 +2,7 @@ Todo List
 =========
 
 + Add pomodoro breaks.
++ Add a way of stopping pomodoros (ugh).
 + Fix the 'die' message so that it doesn't kick off duplicated clients. At the
   moment, the clients will appear to die until they send their next alive() :P
 + Add sounds for chat and pomodoro events. I'm thinking 1-2s vuvuzela sample for chat
@@ -14,10 +15,12 @@ Todo List
   delta encoding). I'll add WebRTC when and if it gets traction amongst browser
   vendors.
 + In the current frame upload code, I need to:
-  - Implement delta frames
-  - Refactor frame upload code so that it uses global video/canvas elements
-  - Implement camera disabling code (which will mutate said elements)
-  - Instead of using setInterval, make it so that the upload code is responsible
-    for rescheduling itself in an appropriate amount of time (so that we don't
-    end up uploading several frames at once). Also remember that I need to stop
-    the handler if the disable code tells us to stop.
+  - Get camera disabling to work. This probably requires destruction of the
+    video source URL. IMO this is an API defect (if you accidentally lose the
+    video from scope, the camera never stops recording!), but I have to work around
+    it anyway.
+  - Make delta frames work at an acceptable pace. At the moment they are so slow
+    that they'll cause everything to freeze up and die with more than a few
+    clients ;_;
++ Remove autopublish.
++ Refactor everything ruthlessly. The code is needlessly complex at the moment.
