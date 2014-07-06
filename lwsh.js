@@ -171,14 +171,14 @@ if (Meteor.isClient) {
                     }
 
                     // XXX Firefox-specific
-                    navigator.mozGetUserMedia({video: true}, function(stream) {
+                    navigator.getUserMedia({video: true}, function(stream) {
                         if (!currentCamera.enabled) {
                             delete currentCamera.ve;
                             delete currentCamera.ce;
                             return;
                         }
                         currentCamera.ve = document.createElement('video');
-                        currentCamera.ve.mozSrcObject = stream;
+                        currentCamera.ve.src = URL.createObjectURL(stream);
                         currentCamera.ve.play();
                         currentCamera.ce = document.createElement('canvas');
                         currentCamera.ce.width = 320; // XXX
