@@ -73,7 +73,7 @@ function kill(uid) {
     }
 }
 
-function startPomo(time) {
+function startPomoBreak(time, type) {
     // if there's no pomo running at the moment, start one.
     var pomo = CurrentPomodoro.findOne({});
     var now = new Date().getTime();
@@ -81,7 +81,7 @@ function startPomo(time) {
     var doc = {
             ends: now + 60 * 1000 * time,
             duration: time,
-            type: 'pomo'
+            type: type
     };
     if (!pomo) {
         // create a new one!
@@ -91,6 +91,14 @@ function startPomo(time) {
         return CurrentPomodoro.update({_id: pomo._id}, doc);
     }
     return null;
+}
+
+function startPomo(time) {
+    return startPomoBreak(time, 'pomo');
+}
+
+function startBreak(time) {
+    return startPomoBreak(time, 'break');
 }
 
 function encodeFrameDelta(original, now) {
@@ -118,11 +126,17 @@ HEARTBEAT_TIME = 15 * SECONDS; // heartbeat every 15s
 EVICTION_TIME = 30 * SECONDS; // evict automatically after 30s
 // regex for detecting pomodoro control strings
 POMODORO_REGEX = /^(:?for\s*)?\:\s*(\d{1,3})$/i;
+// regex for detecting the ding at the end of a pomodoro. Won't detect "ding?"
+// or its capitalisation variants.
+// Optionally captures a break length
+BREAK_REGEX = /^ding(:?\s+(:?for)?\s+:?(\d{1,2}))?\s*[.!]*$/i
 // how often should we send I-frames?
 IFRAME_INTERVAL = 0; // ALL THE DAMN TIME
 // how fast should we upload video
 VIDEO_FPS = 12;
 MAX_NICK_LENGTH = 32;
+// default break length in minutes
+DEFAULT_BREAK_LENGTH = 8;
 
 aliveHandle = undefined;
 currentCamera = {
@@ -488,11 +502,24 @@ if (Meteor.isServer) {
                 nick: Match.Optional(String)
             });
             Messages.insert(doc);
+            // TODO: write a message out explaining that a pomodoro has been
+            // started
+            // Note that startPomo/startBreak actually check whether the current
+            // break/pomodoro has expired.
             var match = POMODORO_REGEX.exec(doc.message);
             if (match && match[2]) {
                 var time = parseInt(match[2]);
                 if (time <= 0 || time > 999) return true;
                 return !!startPomo(time);
+            }
+            var match = BREAK_REGEX.exec(doc.message);
+            if (match) {
+                var time = DEFAULT_BREAK_LENGTH;
+                if (match[2]) {
+                    time = parseInt(match[2]);
+                    if (time <= 0 || time > 99) return true;
+                }
+                return !!startBreak(time);
             }
             return true;
         },
