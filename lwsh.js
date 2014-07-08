@@ -163,13 +163,13 @@ if (Meteor.isClient) {
             if (Template.cameras.hidden) {
                 /* Expand div */
                 $('#cameras').slideDown();
-                $('#expandcollapse').addClass('fa-chevron-up');
+                $('#expandcollapse .fa-chevron-down').addClass('fa-chevron-up');
                 $('#expandcollapse').removeClass('fa-chevron-down');
                 Template.cameras.hidden = false;
             } else {
                 /* Collapse div */
                 $('#cameras').slideUp();
-                $('#expandcollapse').addClass('fa-chevron-down');
+                $('#expandcollapse .fa-chevron-up').addClass('fa-chevron-down');
                 $('#expandcollapse').removeClass('fa-chevron-up');
                 Template.cameras.hidden = true;
             }

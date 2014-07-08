@@ -4,8 +4,6 @@ Todo List
 + Add a way of stopping pomodoros (ugh). This may require voting.
 + Add a way of kicking misbehaving users.
 + Make pomodoro timer control less obtuse. A button or two would be nice :-)
-+ Also make camera control less obtuse. At the moment it's not particularly
-  obvious what the camera button does.
 + Fix the 'die' message so that it doesn't kick off duplicated clients. At the
   moment, the clients will appear to die until they send their next alive() :P
 + Add sounds for chat and pomodoro events. I'm thinking 1-2s vuvuzela sample for chat

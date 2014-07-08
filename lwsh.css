@@ -67,7 +67,6 @@ header {
     bottom: -1.4em;
     text-decoration: none;
     display: inline-block;
-    width: 1.2em;
     text-align: center;
 }
 
@@ -77,6 +76,16 @@ header {
 
 #enablecam, #disablecam {
     border-radius: 0 0 5px 5px;
+}
+
+#enablecam:before {
+    content: "Enable camera";
+    margin-right: 5px;
+}
+
+#disablecam:before {
+    content: "Disable camera";
+    margin-right: 5px;
 }
 
 #pomostatus {
@@ -165,46 +174,3 @@ header {
     word-break: any;
     font-weight: bold;
 }
-
-.paused {
-    background-color: #8AC757;
-    border: 0.2em solid #7FAE59;
-}
-
-.paused:hover {
-    background-color: #A2D578;
-}
-
-.paused:active {
-    border: 0.2em solid #68A436;
-}
-
-.running {
-    background-color: #FF9C17;
-    border: 0.2em solid #F2900C;
-}
-
-.running:hover {
-    background-color: #FFAE42;
-}
-
-.running:active {
-    border: 0.2em solid #ED8800;
-}
-
-/* from colorschemedesigner.com:
-
-.primary-1 { background-color: #8AC757 }
-.primary-2 { background-color: #7FAE59 }
-.primary-3 { background-color: #68A436 }
-.primary-4 { background-color: #9CD56D }
-.primary-5 { background-color: #A2D578 }
-
-For when it's running, didn't use these in their entirety:
-.primary-1 { background-color: #FF9200 }
-.primary-2 { background-color: #F2900C }
-.primary-3 { background-color: #ED8800 }
-.primary-4 { background-color: #FF970D }
-.primary-5 { background-color: #FF9C17 }
-
-*/
