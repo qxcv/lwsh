@@ -1,19 +1,17 @@
 Todo List
 =========
 
-+ Add pomodoro breaks.
-+ Add a way of stopping pomodoros (ugh).
++ Add a way of stopping pomodoros (ugh). This may require voting.
++ Add a way of kicking misbehaving users.
++ Make pomodoro timer control less obtuse. A button or two would be nice :-)
++ Also make camera control less obtuse. At the moment it's not particularly
+  obvious what the camera button does.
 + Fix the 'die' message so that it doesn't kick off duplicated clients. At the
   moment, the clients will appear to die until they send their next alive() :P
 + Add sounds for chat and pomodoro events. I'm thinking 1-2s vuvuzela sample for chat
   messages and siren for pomodoro events. The tricky bit here is figuring out
   how to add an "add message" handler into the reactive architecture.
-+ Work on video streaming of some sort. I'm not 100% clear on how I'll do this,
-  but I think it will be WebRTC/TURN based. I may need to implement a supernode
-  architecture if there are lots of clients (since n^2/2 connections = hell).
-  EDIT: I'm going to just do server-based streaming with MJPEG (or maybe MJPEG +
-  delta encoding). I'll add WebRTC when and if it gets traction amongst browser
-  vendors.
++ Fix the bug that allows users to double-enable the camera :-(
 + In the current frame upload code, I need to:
   - Get camera disabling to work. This probably requires destruction of the
     video source URL. IMO this is an API defect (if you accidentally lose the
