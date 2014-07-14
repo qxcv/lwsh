@@ -16,6 +16,23 @@ header {
     text-align: left;
 }
 
+#helpbutton {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    position: absolute;
+    bottom: 50%;
+    right: 0;
+    background-color: #2d2d2d;
+    color: cream;
+    margin: 0;
+    padding: 0.1em 0.2em;
+}
+
+#helpbutton a {
+    text-decoration: none;
+    color: inherit;
+}
+
 #cameras {
     margin-left: auto;
     margin-right: auto;
