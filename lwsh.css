@@ -91,7 +91,7 @@ header {
 #pomostatus {
     width: 600px;
     border-radius: 2px;
-    background-color: rgba(180, 180, 180, 0.2);
+    background-color: rgba(78, 168, 48, 0.2);
     padding: 0.5em;
     font-size: 1.2em;
     text-align: center;
@@ -125,12 +125,30 @@ header {
 #chatbox td {
     overflow: hidden;
     border: 1px solid #aaa;
-    padding: 0.5em;
+}
+
+#users-wrapper {
+    height: 400px;
+    overflow: auto;
+    width: 150px;
+    vertical-align: top;
+    padding: 0;
 }
 
 #users {
-    width: 100px;
-    vertical-align: top;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#users .user {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0 0.5em;
+}
+
+#users .user:nth-child(2n) {
+    background-color: rgba(78, 168, 48, 0.08);
 }
 
 #scrollback-wrapper {
@@ -143,6 +161,10 @@ header {
     overflow-y: scroll;
     padding: 0.5em;
     height: 100%;
+}
+
+#mynick, #chatbox input {
+    padding: 0.1em;
 }
 
 #mynick {

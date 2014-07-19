@@ -71,16 +71,18 @@
     <section id=chatbox>
         <table height=500px>
             <tr>
-                <td id=users>
-                    {{#each occupants}}
-                        <div class=user>
-                            {{#if nick}}
-                                {{nick}}
-                            {{else}}
-                                {{uid}}
-                            {{/if}}
-                        </div>
-                    {{/each}}
+                <td id=users-wrapper>
+                    <div id=users>
+                        {{#each occupants}}
+                            <div class=user>
+                                {{#if nick}}
+                                    {{nick}}
+                                {{else}}
+                                    {{uid}}
+                                {{/if}}
+                            </div>
+                        {{/each}}
+                    </div>
                 </td>
                 <td id=scrollback-wrapper>
                     <div id=scrollback>
