@@ -1,4 +1,5 @@
 #helpbutton {
+    border-radius: 0 0 2px 2px;
     transform-origin: 0 0;
     -webkit-transform-origin: 0 0;
     transform: rotate(-90deg);

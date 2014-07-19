@@ -71,11 +71,11 @@ header {
 }
 
 #expandcollapse {
-    border-radius: 0 0 0 5px;
+    border-radius: 0 0 0 2px;
 }
 
 #enablecam, #disablecam {
-    border-radius: 0 0 5px 5px;
+    border-radius: 0 0 2px 2px;
 }
 
 #enablecam:before {
@@ -90,7 +90,7 @@ header {
 
 #pomostatus {
     width: 600px;
-    border-radius: 5px;
+    border-radius: 2px;
     background-color: rgba(180, 180, 180, 0.2);
     padding: 0.5em;
     font-size: 1.2em;
@@ -109,6 +109,7 @@ header {
 #chatbox {
     margin: 0 3em 0 3em;
     background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
 }
 
 #chatbox table {
@@ -127,24 +128,24 @@ header {
     padding: 0.5em;
 }
 
-#chatbox #users {
+#users {
     width: 100px;
     vertical-align: top;
 }
 
-#chatbox #scrollback-wrapper {
+#scrollback-wrapper {
     padding: 0;
     height: 400px;
 }
 
-#chatbox #scrollback {
+#scrollback {
     text-align: left;
     overflow-y: scroll;
     padding: 0.5em;
     height: 100%;
 }
 
-#chatbox #mynick {
+#mynick {
     height: 1em;
 }
 
