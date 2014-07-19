@@ -17,20 +17,43 @@ header {
 }
 
 #helpbutton {
+    transform-origin: 100% 100%;
+    -webkit-transform-origin: 0 0;
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
-    position: absolute;
-    bottom: 50%;
+    position: fixed;
     right: 0;
+    top: 50%;
     background-color: #2d2d2d;
-    color: cream;
-    margin: 0;
     padding: 0.1em 0.2em;
 }
 
 #helpbutton a {
     text-decoration: none;
-    color: inherit;
+    color: white;
+}
+
+.blackout {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 420; /* it was a toss up between that and 666. Why yes, I DO have a very mature sense of humour */
+    padding-top: 2.5%;
+}
+
+#faqbox {
+    background-color: white;
+    width: 600px;
+    height: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1em;
+    overflow: auto;
+}
+
+#faqbox dt {
+    font-weight: bold;
 }
 
 #cameras {
