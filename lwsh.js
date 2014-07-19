@@ -185,8 +185,10 @@ if (Meteor.isClient) {
                     navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
 
                     if (!navigator.getUserMedia) {
-                         console.log('No WebRTC support detected :(');
-                         return;
+                        // XXX tell the user that we've failed to get the webcam
+                        // working
+                        console.log('No WebRTC support detected :(');
+                        return;
                     }
 
                     navigator.getUserMedia({video: true}, function(stream) {
@@ -268,6 +270,7 @@ if (Meteor.isClient) {
                         }
                         ivfunc();
                     }, function(error) {
+                        // XXX Need to actually disable camera in this case.
                         console.log("Haven't got it :(");
                     });
                 }
