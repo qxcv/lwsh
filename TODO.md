@@ -10,11 +10,6 @@ Todo List
   messages and siren for pomodoro events. The tricky bit here is figuring out
   how to add an "add message" handler into the reactive architecture.
 + Fix the bug that allows users to double-enable the camera :-(
-+ In the current frame upload code, I need to:
-  - Get camera disabling to work. This probably requires destruction of the
-    video source URL. IMO this is an API defect (if you accidentally lose the
-    video from scope, the camera never stops recording!), but I have to work around
-    it anyway.
   - Make delta frames work at an acceptable pace. At the moment they are so slow
     that they'll cause everything to freeze up and die with more than a few
     clients ;_;

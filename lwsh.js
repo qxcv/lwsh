@@ -461,9 +461,6 @@ if (Meteor.isClient) {
             if (aliveHandle) Meteor.clearInterval(aliveHandle);
             Meteor.call('dead');
         };
-        $(document).ready(function() {
-            // Set up the FAQ button
-        });
     });
 }
 
