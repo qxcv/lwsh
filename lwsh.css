@@ -171,6 +171,6 @@ header {
 
 #scrollback .uid {
     width: 3em;
-    word-break: any;
+    word-break: break-all;
     font-weight: bold;
 }
