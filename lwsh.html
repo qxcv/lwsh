@@ -16,7 +16,7 @@
     {{> chatbox}}
 </body>
 
-<template name=cameras>
+<template name="cameras">
     <section id=cameras>
         {{#each activeCameras}}
             {{> camera}}
@@ -42,7 +42,7 @@
     </div>
 </template>
 
-<template name=camera>
+<template name="camera">
     <div class=camera-frame>
         <span class=title>
             {{#if nick}}
@@ -55,7 +55,7 @@
     </div>
 </template>
 
-<template name=pomostatus>
+<template name="pomostatus">
     <section id=pomostatus>
         {{#if status}}
             <span id=status-name>{{toStateName status.type}}</span> for <time
@@ -67,7 +67,7 @@
     </section>
 </template>
 
-<template name=chatbox>
+<template name="chatbox">
     <section id=chatbox>
         <table height=500px>
             <tr>
@@ -102,7 +102,7 @@
     </section>
 </template>
 
-<template name=message>
+<template name="message">
     {{#if nick}}
         <div class=entry>
             <div class=uid>
